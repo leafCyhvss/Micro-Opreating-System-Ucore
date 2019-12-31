@@ -58,6 +58,7 @@ _fifo_map_swappable(struct mm_struct *mm, uintptr_t addr, struct Page *page, int
 static int
 _fifo_map_swappable2(struct mm_struct *mm, uintptr_t addr, struct Page *page, int swap_in)
 {
+    //改进型时钟算法对应代码
     
     list_entry_t *head=(list_entry_t*) mm->sm_priv;
     list_entry_t *entry=&(page->pra_page_link);
@@ -72,9 +73,6 @@ _fifo_map_swappable2(struct mm_struct *mm, uintptr_t addr, struct Page *page, in
     *pte &= ~PTE_A;
     return 0;
 }
-
-
-
 
 /*
  *  (4)_fifo_swap_out_victim: According FIFO PRA, we should unlink the  earliest arrival page in front of pra_list_head qeueue,
@@ -107,6 +105,7 @@ _fifo_swap_out_victim(struct mm_struct *mm, struct Page ** ptr_page, int in_tick
 static int
 _fifo_swap_out_victim2(struct mm_struct *mm, struct Page ** ptr_page, int in_tick)
 {
+    //改进型时钟算法对应代码
     //Challenge2  code:
     list_entry_t *head=(list_entry_t*) mm->sm_priv;
     assert(head != NULL);
@@ -136,47 +135,7 @@ _fifo_swap_out_victim2(struct mm_struct *mm, struct Page ** ptr_page, int in_tic
     }
     return 0;
 }
-static int
-_fifo_check_swap2(void) {
-    cprintf("write Virt Page c in fifo_check_swap\n");
-    *(unsigned char *)0x3000 = 0x0c;
-    //assert(pgfault_num==4);
-    cprintf("write Virt Page a in fifo_check_swap\n");
-    *(unsigned char *)0x1000 = 0x0a;
-    //assert(pgfault_num==4);
-    cprintf("write Virt Page d in fifo_check_swap\n");
-    *(unsigned char *)0x4000 = 0x0d;
-    //assert(pgfault_num==4);
-    cprintf("write Virt Page b in fifo_check_swap\n");
-    *(unsigned char *)0x2000 = 0x0b;
-    //assert(pgfault_num==4);
-    cprintf("write Virt Page e in fifo_check_swap\n");
-    *(unsigned char *)0x5000 = 0x0e;
-    //assert(pgfault_num==5);
-    cprintf("write Virt Page b in fifo_check_swap\n");
-    *(unsigned char *)0x2000 = 0x0b;
-    //assert(pgfault_num==5);
-    cprintf("write Virt Page a in fifo_check_swap\n");
-    *(unsigned char *)0x1000 = 0x0a;
-    //assert(pgfault_num==6);
-    cprintf("write Virt Page b in fifo_check_swap\n");
-    *(unsigned char *)0x2000 = 0x0b;
-    //assert(pgfault_num==7);
-    cprintf("write Virt Page c in fifo_check_swap\n");
-    *(unsigned char *)0x3000 = 0x0c;
-    //assert(pgfault_num==8);
-    cprintf("write Virt Page d in fifo_check_swap\n");
-    *(unsigned char *)0x4000 = 0x0d;
-    //assert(pgfault_num==9);
-    cprintf("write Virt Page e in fifo_check_swap\n");
-    *(unsigned char *)0x5000 = 0x0e;
-    //assert(pgfault_num==10);
-    cprintf("write Virt Page a in fifo_check_swap\n");
-    //assert(*(unsigned char *)0x1000 == 0x0a);
-    *(unsigned char *)0x1000 = 0x0a;
-    //assert(pgfault_num==11);
-    return 0;
-}
+
 
 static int
 _fifo_check_swap(void) {
@@ -220,6 +179,48 @@ _fifo_check_swap(void) {
     return 0;
 }
 
+static int
+_fifo_check_swap2(void) {
+    //改进型时钟算法对应代码
+    cprintf("write Virt Page c in fifo_check_swap\n");
+    *(unsigned char *)0x3000 = 0x0c;
+    //assert(pgfault_num==4);
+    cprintf("write Virt Page a in fifo_check_swap\n");
+    *(unsigned char *)0x1000 = 0x0a;
+    //assert(pgfault_num==4);
+    cprintf("write Virt Page d in fifo_check_swap\n");
+    *(unsigned char *)0x4000 = 0x0d;
+    //assert(pgfault_num==4);
+    cprintf("write Virt Page b in fifo_check_swap\n");
+    *(unsigned char *)0x2000 = 0x0b;
+    //assert(pgfault_num==4);
+    cprintf("write Virt Page e in fifo_check_swap\n");
+    *(unsigned char *)0x5000 = 0x0e;
+    //assert(pgfault_num==5);
+    cprintf("write Virt Page b in fifo_check_swap\n");
+    *(unsigned char *)0x2000 = 0x0b;
+    //assert(pgfault_num==5);
+    cprintf("write Virt Page a in fifo_check_swap\n");
+    *(unsigned char *)0x1000 = 0x0a;
+    //assert(pgfault_num==6);
+    cprintf("write Virt Page b in fifo_check_swap\n");
+    *(unsigned char *)0x2000 = 0x0b;
+    //assert(pgfault_num==7);
+    cprintf("write Virt Page c in fifo_check_swap\n");
+    *(unsigned char *)0x3000 = 0x0c;
+    //assert(pgfault_num==8);
+    cprintf("write Virt Page d in fifo_check_swap\n");
+    *(unsigned char *)0x4000 = 0x0d;
+    //assert(pgfault_num==9);
+    cprintf("write Virt Page e in fifo_check_swap\n");
+    *(unsigned char *)0x5000 = 0x0e;
+    //assert(pgfault_num==10);
+    cprintf("write Virt Page a in fifo_check_swap\n");
+    //assert(*(unsigned char *)0x1000 == 0x0a);
+    *(unsigned char *)0x1000 = 0x0a;
+    //assert(pgfault_num==11);
+    return 0;
+}
 
 static int
 _fifo_init(void)
