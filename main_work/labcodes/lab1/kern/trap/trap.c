@@ -173,11 +173,51 @@ trap_dispatch(struct trapframe *tf) {
     case IRQ_OFFSET + IRQ_KBD:
         c = cons_getc();
         cprintf("kbd [%03d] %c\n", c, c);
+        if(c=='3')
+        {
+            tf->tf_eflags|=FL_IOPL_MASK;
+            tf->tf_ss = USER_DS;
+            tf->tf_cs = USER_CS;
+            tf->tf_ds = USER_DS;
+            tf->tf_es = USER_DS;
+            tf->tf_fs = USER_DS;
+            tf->tf_gs = USER_DS;
+            print_trapframe(tf);
+            cprintf("--------kernel to user--------\n");
+        }
+        else if(c=='0')
+        {
+            tf->tf_cs = KERNEL_CS;
+            tf->tf_ds = KERNEL_DS;
+            tf->tf_es = KERNEL_DS;
+            tf->tf_gs = KERNEL_DS;
+            tf->tf_ss = KERNEL_DS;
+            tf->tf_fs = KERNEL_DS;
+            tf->tf_eflags&=~FL_IOPL_MASK;
+            print_trapframe(tf);
+            cprintf("--------user to kernel--------\n");
+        }
         break;
     //LAB1 CHALLENGE 1 : YOUR CODE you should modify below codes.
     case T_SWITCH_TOU:
+        if (tf->tf_cs!=USER_CS){
+            tf->tf_eflags |= FL_IOPL_MASK;//修改I/O特权级  FL_IOPL_MASK实际与FL_IOPL_3效果相同
+            tf->tf_ss = USER_DS;
+            tf->tf_cs = USER_CS;
+            tf->tf_ds = USER_DS;
+            tf->tf_es = USER_DS;
+            tf->tf_fs = USER_DS;
+            tf->tf_gs = USER_DS;
+        }
+        break;
     case T_SWITCH_TOK:
-        panic("T_SWITCH_** ??\n");
+        tf->tf_cs = KERNEL_CS;
+        tf->tf_ds = KERNEL_DS;
+        tf->tf_es = KERNEL_DS;
+        tf->tf_gs = KERNEL_DS;
+        tf->tf_ss = KERNEL_DS;
+        tf->tf_fs = KERNEL_DS;
+        tf->tf_eflags&=~FL_IOPL_MASK;
         break;
     case IRQ_OFFSET + IRQ_IDE1:
     case IRQ_OFFSET + IRQ_IDE2:

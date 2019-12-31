@@ -4,6 +4,8 @@
 
 ## 1.1  操作系统镜像文件ucore.img是如何一步一步生成的？
 
+ISR中断服务例程
+
 (Makefile中每一条相关命令和-命令参数的含义及结果)
 
 Makefile通过一系列命令(gcc, ld)生成了bootblock和kernel这两个elf文件，之后通过dd命令将bootblock放到第一个sector，将kernel放到第二个sector开始的区域。bootblock就是引导区即bootloader，kernel是ucore os内核。
@@ -913,6 +915,195 @@ ebp:0x00007bf8 eip:0x00007d68 args:arg :0xc031fcfa 0xc08ed88e 0x64e4d08e 0xfa750
 ```
 
 因为没有做拓展练习，所以make grade 分不高
+
+`basic knowledge`
+
+```
+cs 为代码段寄存器，一般用于存放代码；
+
+ 通常和IP 使用用于处理下一条执行的代码
+
+cs:IP
+
+基地址：偏移地址
+
+cs地址对应的数据 相当于c语言中的代码语句
+
+cs需要左移4位以达到20位
+
+
+
+ds 为数据段寄存器，一般用于存放数据；
+
+ds地址对应的数据 相当于c语言中的全局变量
+
+ss 为栈段寄存器，一般作为栈使用和sp搭档；
+
+ss地址对应的数据 相当于c语言中的局部变量
+ss相当于堆栈段的首地址  sp相当于堆栈段的偏移地址
+
+es 为扩展段寄存器；
+
+寄存器前加e:表示从16位拓展到32位的寄存器
+
+```
+
+cs ds ss es 作用：在实模式下就是分段作用
+
+​								在保护模式下成为GDT的段
+
+# 7 Challenge 1
+
+**扩展proj4,增加syscall功能,即增加一用户态函数(可执行一特定系统调用:获得时钟计数值),当内核初始完毕**
+**后,可从内核态返回到用户态的函数,而用户态的函数又通过系统调用得到内核态的服务(通过网络查询所需信息,**
+**可找老师咨询。如果完成,且有兴趣做代替考试的实验,可找老师商量)。需写出详细的设计和分析报告。完成出色**
+**的可获得适当加分。**
+
+`kern/trap/vector.S`
+
+```
+vector10:
+  pushl $10
+  jmp __alltraps
+```
+
+`__alltraps`:`kern/trap/trapentry.S`
+
+```
+ # push registers to build a trap frame
+ # therefore make the stack look like a struct trapframe
+```
+
+本质就是将寄存器压栈，然后调用`trap.c`中的`trap()` ->`trap`调用`trap_dispatch(tf);`
+
+所以需要完善的部分：
+
+1 中断描述符对应的代码
+
+```C
+#define T_SWITCH_TOU                120    // user/kernel switch
+#define T_SWITCH_TOK                121    // user/kernel switch
+```
+
+2 软中断函数trap()->trap_dispatch
+
+## 7.1 switch_to_u / k
+
+调用中断前先修改esp
+
+调用中断需要保证堆栈对齐。中断切换tf的时候是要取&存ss esp的。但是kernel一开始就是运行在内核态下的，因此使用int指令产生软中断的时候，硬件保存在stack上的信息中并不会包含原先的esp和ss寄存器的值。从用户切换回来的时候需要压esp ss 所以留好位置。
+
+```c
+static void
+lab1_switch_to_user(void) {
+    //LAB1 CHALLENGE 1 : TODO
+    asm volatile (
+    //调用 T_SWITCH_TOU 中断
+    "sub $0x8, %%esp;" //下移8
+    "int %0;"
+    "movl %%ebp, %%esp" //恢复栈指针
+    :
+    : "i"(T_SWITCH_TOU)
+    );
+}
+
+static void
+lab1_switch_to_kernel(void) {
+    //LAB1 CHALLENGE 1 :  TODO
+    asm volatile (
+    //调用 T_SWITCH_TOU 中断
+    "int %0;"
+    "movl %%ebp, %%esp" //恢复栈指针
+    :
+    : "i"(T_SWITCH_TOK)
+    );
+}
+```
+
+## 7.2 `trap_dispatch`:
+
+```c
+case T_SWITCH_TOU:
+        if (tf->tf_cs!=USER_CS){
+            tf->tf_eflags |= FL_IOPL_MASK;//修改I/O特权级  FL_IOPL_MASK实际与FL_IOPL_3效果相同
+            tf->tf_ss = USER_DS;
+            tf->tf_cs = USER_CS;
+            tf->tf_ds = USER_DS;
+            tf->tf_es = USER_DS;
+            tf->tf_fs = USER_DS;
+            tf->tf_gs = USER_DS;
+        }
+        break;
+    case T_SWITCH_TOK:
+        tf->tf_cs = KERNEL_CS;
+        tf->tf_ds = KERNEL_DS;
+        tf->tf_es = KERNEL_DS;
+        tf->tf_gs = KERNEL_DS;
+        tf->tf_ss = KERNEL_DS;
+        tf->tf_fs = KERNEL_DS;
+		tf->tf_eflags&=~FL_IOPL_MASK;
+        break;
+```
+
+# 8 Challenge 2
+
+**用键盘实现用户模式内核模式切换。具体目标是:“键盘输入3时切换到用户模式,键盘输入0时切换到内核模式”。**
+**基本思路是借鉴软中断(syscall功能)的代码,并且把trap.c中软中断处理的设置语句拿过来。**
+
+```c
+case IRQ_OFFSET + IRQ_KBD:
+        c = cons_getc();
+        cprintf("kbd [%03d] %c\n", c, c);
+        if(c=='3')
+        {
+            tf->tf_eflags|=FL_IOPL_MASK;
+            tf->tf_ss = USER_DS;
+            tf->tf_cs = USER_CS;
+            tf->tf_ds = USER_DS;
+            tf->tf_es = USER_DS;
+            tf->tf_fs = USER_DS;
+            tf->tf_gs = USER_DS;
+            print_trapframe(tf);
+            cprintf("--------kernel to user--------\n");
+        }
+        else if(c=='0')
+        {
+            tf->tf_cs = KERNEL_CS;
+            tf->tf_ds = KERNEL_DS;
+            tf->tf_es = KERNEL_DS;
+            tf->tf_gs = KERNEL_DS;
+            tf->tf_ss = KERNEL_DS;
+            tf->tf_fs = KERNEL_DS;
+            tf->tf_eflags&=~FL_IOPL_MASK;
+            print_trapframe(tf);
+            cprintf("--------user to kernel--------\n");
+        }
+        break;
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
