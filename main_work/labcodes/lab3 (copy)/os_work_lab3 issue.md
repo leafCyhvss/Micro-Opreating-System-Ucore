@@ -417,3 +417,108 @@ check_swap() succeeded!------------------------成功
 判断每个物理页对应的虚拟页的(A,D)，根据以上四种情况计数。
 
 有多个虚拟页对应一个物理页时，相加，和最小的优先替换。
+
+## Challenge 1:   实现识别dirty bit的 extended clock页替换算法(需要编程)
+
+### basic knowledge
+
+```
+1. 时钟页替换算法把各个页面组织成环形链表。然后把当前指针指向最先进来的页面。
+2. 算法在页表项（PTE）中的访问位 A 和  写(xiu)入(gai)位D(dirty bit)。
+3. 当该页被访问时，MMU:PTE_A->“1”。被修改：PTE_D->1;
+4. 具体替换流程：
+```
+
+| A,D  | 置换与否 |
+| :--: | :------: |
+| 0,0  |   置换   |
+| 0,1  |   0,0    |
+| 1,0  |   0,0    |
+| 1,1  |   0,1    |
+
+修改`swap_manager`对应代码：
+
+### 1 `_fifo_map_swappable()`
+
+```c
+static int
+_fifo_map_swappable(struct mm_struct *mm, uintptr_t addr, struct Page *page, int swap_in)
+{
+    
+    list_entry_t *head=(list_entry_t*) mm->sm_priv;
+    list_entry_t *entry=&(page->pra_page_link);
+
+    assert(entry != NULL && head != NULL);
+    list_add(head -> prev, entry);//换入页的在链表中的位置并不影响
+    
+    // 新插入的页A,D标记为0.
+    struct Page *ptr = le2page(entry, pra_page_link);
+    pte_t *pte = get_pte(mm -> pgdir, ptr -> pra_vaddr, 0);
+    *pte&=~PTE_D;
+    *pte&=~PTE_A;
+    return 0;
+}
+```
+
+### 2 `_fifo_swap_out_victim()`
+
+```c
+static int
+_fifo_swap_out_victim(struct mm_struct *mm, struct Page ** ptr_page, int in_tick)
+{
+    //Challenge2  code:
+    list_entry_t *head=(list_entry_t*) mm->sm_priv;
+    assert(head != NULL);
+    assert(in_tick==0);
+	//select victim----
+    list_entry_t *le = head;
+    while (1) {
+        le = list_next(le);
+        if (le == head) {
+            le = list_next(le);
+        }
+        struct Page *ptr = le2page(le, pra_page_link);
+        pte_t *pte = get_pte(mm -> pgdir, ptr -> pra_vaddr, 0);
+         //获取页表项
+        if((*pte & PTE_A)==0){
+            if ((*pte & PTE_D) == 0) {//直接换出
+             	list_del(le);
+                *ptr_page = ptr;
+                break;//终止循环节省开销
+            }
+            else {
+            *pte &= ~PTE_D;//Ucore貌似不用加入写回的事情
+            }//A为0 D为1，D改为0
+        }
+        else {*pte &= ~PTE_A;}//A为1，D为0或1都只是需要修改A为0
+		//le = list_next(le);//如果在当前页没有跳出循环，那么取下一页
+    }
+    return 0;
+}
+```
+
+直接用上述代码替换原本位置代码。（原来的函数函数名后添加了个2）
+
+提交的代码中，还是用`fifo`的函数。即`exclock`的函数名有2
+
+### 执行make qemu 
+
+```
+kernel panic at kern/mm/swap_fifo.c:203:
+    assertion failed: pgfault_num==6
+```
+
+缺页次数没有那么多：
+
+问了一下其他写过该拓展的同学，貌似check_swap的断言得去掉……
+
+执行make qemu:
+
+```
+count is 7, total is 7
+check_swap() succeeded!
+++ setup timer interrupts
+100 ticks
+100 ticks
+```
+

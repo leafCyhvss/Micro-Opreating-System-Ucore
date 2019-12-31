@@ -2,7 +2,7 @@
 
 Special kernel symbols:
   entry  0xc0100036 (phys)
-  etext  0xc0108c9f (phys)
+  etext  0xc0108fba (phys)
   edata  0xc0123000 (phys)
   end    0xc01240fc (phys)
 Kernel executable memory footprint: 145KB
@@ -21,10 +21,10 @@ ebp:0xc011ff88 eip:0xc0100100 args:arg :0x00000000 0xffff0000 0xc011ffb4 0x00000
 ebp:0xc011ffa8 eip:0xc010011e args:arg :0x00000000 0xc0100036 0xffff0000 0x0000001d
 
     kern/init/init.c:67: grade_backtrace0+23
-ebp:0xc011ffc8 eip:0xc0100143 args:arg :0xc0108cbc 0xc0108ca0 0x000010fc 0x00000000
+ebp:0xc011ffc8 eip:0xc0100143 args:arg :0xc0108fdc 0xc0108fc0 0x000010fc 0x00000000
 
     kern/init/init.c:72: grade_backtrace+34
-ebp:0xc011fff8 eip:0xc010008b args:arg :0xc0108eb4 0xc0108ebc 0xc0100d37 0xc0108edb
+ebp:0xc011fff8 eip:0xc010008b args:arg :0xc01091d4 0xc01091dc 0xc0100d37 0xc01091fb
 
     kern/init/init.c:32: kern_init+84
 memory management: default_pmm_manager
@@ -101,22 +101,22 @@ End of Test.
 kernel panic at kern/trap/trap.c:20:
     EOT: kernel seems ok.
 stack trackback:
-ebp:0xc011fee0 eip:0xc0100ab9 args:arg :0xc0108d68 0xc011ff24 0x00000014 0xc011ff5c
+ebp:0xc011fee0 eip:0xc0100ab9 args:arg :0xc0109088 0xc011ff24 0x00000014 0xc011ff5c
 
     kern/debug/kdebug.c:308: print_stackframe+22
-ebp:0xc011ff10 eip:0xc0100462 args:arg :0xc010914e 0x00000014 0xc0109138 0x00000007
+ebp:0xc011ff10 eip:0xc0100462 args:arg :0xc010946e 0x00000014 0xc0109458 0x00000007
 
     kern/debug/panic.c:27: __panic+105
 ebp:0xc011ff30 eip:0xc010215d args:arg :0xc011ff68 0xc010029c 0xc010024e 0xc011ff5c
 
     kern/trap/trap.c:20: print_ticks+65
-ebp:0xc011ff60 eip:0xc0102737 args:arg :0xc011ff8c 0xc01002bf 0xc01090be 0xc011ffa4
+ebp:0xc011ff60 eip:0xc0102737 args:arg :0xc011ff8c 0xc01002bf 0xc01093de 0xc011ffa4
 
     kern/trap/trap.c:202: trap_dispatch+201
 ebp:0xc011ff80 eip:0xc01027ff args:arg :0xc011ff8c 0x00000001 0x00000000 0xc011fff8
 
     kern/trap/trap.c:240: trap+16
-ebp:0xc011fff8 eip:0xc0103289 args:arg :0xc0108eb4 0xc0108ebc 0xc0100d37 0xc0108edb
+ebp:0xc011fff8 eip:0xc0103289 args:arg :0xc01091d4 0xc01091dc 0xc0100d37 0xc01091fb
 
     kern/trap/trapentry.S:24: <unknown>+0
 Welcome to the kernel debug monitor!!
