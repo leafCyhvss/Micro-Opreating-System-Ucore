@@ -342,39 +342,27 @@ pmm_init(void) {
 // return vaule: the kernel virtual address of this pte
 pte_t *
 get_pte(pde_t *pgdir, uintptr_t la, bool create) {
-    /* LAB2 EXERCISE 2: YOUR CODE
-     *
-     * If you need to visit a physical address, please use KADDR()
-     * please read pmm.h for useful macros
-     *
-     * Maybe you want help comment, BELOW comments can help you finish the code
-     *
-     * Some Useful MACROs and DEFINEs, you can use them in below implementation.
-     * MACROs or Functions:
-     *   PDX(la) = the index of page directory entry of VIRTUAL ADDRESS la.
-     *   KADDR(pa) : takes a physical address and returns the corresponding kernel virtual address.
-     *   set_page_ref(page,1) : means the page be referenced by one time
-     *   page2pa(page): get the physical address of memory which this (struct Page *) page  manages
-     *   struct Page * alloc_page() : allocation a page
-     *   memset(void *s, char c, size_t n) : sets the first n bytes of the memory area pointed by s
-     *                                       to the specified value c.
-     * DEFINEs:
-     *   PTE_P           0x001                   // page table/directory entry flags bit : Present
-     *   PTE_W           0x002                   // page table/directory entry flags bit : Writeable
-     *   PTE_U           0x004                   // page table/directory entry flags bit : User can access
-     */
-#if 0
-    pde_t *pdep = NULL;   // (1) find page directory entry
-    if (0) {              // (2) check if entry is not present
-                          // (3) check if creating is needed, then alloc page for page table
-                          // CAUTION: this page is used for page table, not for common data page
-                          // (4) set page reference
-        uintptr_t pa = 0; // (5) get linear address of page
-                          // (6) clear page content using memset
-                          // (7) set page directory entry's permission
+     pde_t *pdep = &pgdir[PDX(la)];
+    //获取一级页表项对应的入口地址
+    if (!(*pdep & PTE_P)) {
+        //物理页不存在, create==0, null
+        struct Page *page;
+        if (!create || (page = alloc_page()) == NULL) {//分配失败
+            return NULL;
+        }
+        //引用次数+1
+        set_page_ref(page, 1);
+        //物理地址
+        uintptr_t pa = page2pa(page);
+        ///物理地址转虚拟地址，并初始化,把新申请的数目为pgsize个页全设为0	
+        memset(KADDR(pa), 0, PGSIZE);
+        //设置控制位
+        *pdep = pa | PTE_U | PTE_W | PTE_P;
     }
-    return NULL;          // (8) return page table entry
-#endif
+    return &((pte_t *)KADDR(PDE_ADDR(*pdep)))[PTX(la)];
+    //页目录项地址-->>页表物理地址-->>虚拟地址-->>页表项索引
+    //PTX(la)：返回虚拟地址la的页表项索引
+    //返回la对应的页表项入口地址
 }
 
 //get_page - get related Page struct for linear address la using PDT pgdir
@@ -395,31 +383,18 @@ get_page(pde_t *pgdir, uintptr_t la, pte_t **ptep_store) {
 //note: PT is changed, so the TLB need to be invalidate 
 static inline void
 page_remove_pte(pde_t *pgdir, uintptr_t la, pte_t *ptep) {
-    /* LAB2 EXERCISE 3: YOUR CODE
-     *
-     * Please check if ptep is valid, and tlb must be manually updated if mapping is updated
-     *
-     * Maybe you want help comment, BELOW comments can help you finish the code
-     *
-     * Some Useful MACROs and DEFINEs, you can use them in below implementation.
-     * MACROs or Functions:
-     *   struct Page *page pte2page(*ptep): get the according page from the value of a ptep
-     *   free_page : free a page
-     *   page_ref_dec(page) : decrease page->ref. NOTICE: ff page->ref == 0 , then this page should be free.
-     *   tlb_invalidate(pde_t *pgdir, uintptr_t la) : Invalidate a TLB entry, but only if the page tables being
-     *                        edited are the ones currently in use by the processor.
-     * DEFINEs:
-     *   PTE_P           0x001                   // page table/directory entry flags bit : Present
-     */
-#if 0
-    if (0) {                      //(1) check if this page table entry is present
-        struct Page *page = NULL; //(2) find corresponding page to pte
-                                  //(3) decrease page reference
-                                  //(4) and free this page when page reference reachs 0
-                                  //(5) clear second page table entry
-                                  //(6) flush tlb
+    if (*ptep & PTE_P) {
+        //判断页表中该表项是否存在
+        struct Page *page = pte2page(*ptep);//获得相应的page
+        if (page_ref_dec(page) == 0) {
+            ////除了当前进程，没有别的进程引用
+            free_page(page);
+        }
+        *ptep &= (~PTE_P); 
+        // 将PTE的存在位设置为0，表示该映射关系无效
+        tlb_invalidate(pgdir, la);
+         //刷新TLB
     }
-#endif
 }
 
 void
@@ -501,6 +476,12 @@ copy_range(pde_t *to, pde_t *from, uintptr_t start, uintptr_t end, bool share) {
          * (3) memory copy from src_kvaddr to dst_kvaddr, size is PGSIZE
          * (4) build the map of phy addr of  nage with the linear addr start
          */
+        void * kva_src = page2kva(page);
+        void * kva_dst = page2kva(npage);
+    
+        memcpy(kva_dst, kva_src, PGSIZE);
+
+        ret = page_insert(to, npage, start, perm);
         assert(ret == 0);
         }
         start += PGSIZE;

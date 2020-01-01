@@ -347,5 +347,18 @@ print_stackframe(void) {
       *           NOTICE: the calling funciton's return addr eip  = ss:[ebp+4]
       *                   the calling funciton's ebp = ss:[ebp]
       */
+    uint32_t ebp=read_ebp(),eip=read_eip();
+	int i;//这里在for循环里定义好像不行的样子就拿出来了
+	for(i=0;ebp!=0&&i<STACKFRAME_DEPTH;i++)
+    {   
+		cprintf("ebp:0x%08x eip:0x%08x args:", ebp, eip);
+		uint32_t *args = (uint32_t *)ebp + 2;       //ebp+8指向参数，+4指向返回值
+		cprintf("arg :0x%08x 0x%08x 0x%08x 0x%08x\n",*(args+0),*(args+1),*(args+2),*(args+3));
+        //依次打印调用函数的参数1 2 3 4
+		cprintf("\n");
+		print_debuginfo(eip - 1);//eip指向的是下一条指令，所以这里减1  指针占4
+		eip = ((uint32_t *)ebp)[1]; //此时eip指向返回地址
+		ebp = ((uint32_t *)ebp)[0];//ebp存的是调用者edp，所以这里就复原了调用前edp值
+	}
 }
 

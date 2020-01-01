@@ -185,6 +185,12 @@ void phi_take_forks_condvar(int i) {
      // I am hungry
      // try to get fork
 //--------leave routine in monitor--------------
+    state_condvar[i]=HUNGRY; //记录哲学家i是否饥饿
+      phi_test_condvar(i);   //试图拿到叉子 
+      if (state_condvar[i] != EATING) {
+          cprintf("phi_take_forks_condvar: %d didn't get fork and will wait\n",i);
+          cond_wait(&mtp->cv[i]); //得不到叉子就睡眠
+    }
       if(mtp->next_count>0)
          up(&(mtp->next));
       else
@@ -199,6 +205,9 @@ void phi_put_forks_condvar(int i) {
      // I ate over
      // test left and right neighbors
 //--------leave routine in monitor--------------
+    state_condvar[i]=THINKING; //记录进餐结束的状态
+    phi_test_condvar(LEFT); //看一下左边哲学家现在是否能进餐
+    phi_test_condvar(RIGHT); //看一下右边哲学家现在是否能进餐 
      if(mtp->next_count>0)
         up(&(mtp->next));
      else
