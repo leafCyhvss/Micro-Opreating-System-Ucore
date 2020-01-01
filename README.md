@@ -13,7 +13,7 @@ original_文件夹中包含`ucore`原题目(源码)
 
 ### 实验1-8说明文档入口：
 
-[Lab 1:OS启动、中断与设备管理](https://github.com/leafCyhvss/os_ucore_formal/blob/master/main_work/labcodes/lab1/OS lab 1 work issue.md)
+[Lab 1:OS启动、中断与设备管理](https://github.com/leafCyhvss/os_ucore_formal/blob/master/main_work/labcodes/lab1/OS%20lab%201%20work%20issue.md)
 
 [Lab2:物理内存管理](https://github.com/leafCyhvss/os_ucore_formal/blob/master/main_work/labcodes/lab2 (another copy)/os_lab2_work_issue.md)
 
