@@ -474,9 +474,6 @@ _fifo_swap_out_victim(struct mm_struct *mm, struct Page ** ptr_page, int in_tick
     list_entry_t *le = head;
     while (1) {
         le = list_next(le);
-        if (le == head) {
-            le = list_next(le);
-        }
         struct Page *ptr = le2page(le, pra_page_link);
         pte_t *pte = get_pte(mm -> pgdir, ptr -> pra_vaddr, 0);
          //获取页表项
