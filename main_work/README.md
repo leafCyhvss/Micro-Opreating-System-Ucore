@@ -2,9 +2,9 @@
 
 details in sub-dirs 
 
-labcodes:完成实验所敲的代码；
+labcodes:完成实验所敲的代码&每个实验的实验文档;可直接在对应lab 目录下make clean/qemu/grade;
 
-tempfiles: 一堆错误案例：都是失败的经历；
+tempfiles: 一堆错误案例：都是失败的经历;
 
 ### 实验1-8说明文档入口：
 
