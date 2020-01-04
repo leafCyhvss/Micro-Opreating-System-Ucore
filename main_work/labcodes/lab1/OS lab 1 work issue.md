@@ -914,7 +914,7 @@ ebp:0x00007bf8 eip:0x00007d68 args:arg :0xc031fcfa 0xc08ed88e 0x64e4d08e 0xfa750
 100 ticks
 ```
 
-因为没有做拓展练习，所以make grade 分不高
+
 
 `basic knowledge`
 
@@ -989,7 +989,6 @@ vector10:
 
 ## 7.1 switch_to_u / k
 
-调用中断前先修改esp
 
 调用中断需要保证堆栈对齐。中断切换tf的时候是要取&存ss esp的。但是kernel一开始就是运行在内核态下的，因此使用int指令产生软中断的时候，硬件保存在stack上的信息中并不会包含原先的esp和ss寄存器的值。从用户切换回来的时候需要压esp ss 所以留好位置。
 
