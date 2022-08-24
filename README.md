@@ -23,7 +23,7 @@ original_文件夹中包含`ucore`原题目(源码)
 
 [Lab5:用户进程管理](https://github.com/leafCyhvss/os_ucore_formal/blob/master/main_work/labcodes/lab5_2/os_work%20lab5%20issue.md)
 
-[Lab6: 调度器](https://github.com/leafCyhvss/os_ucore_formal/blob/master/main_work/labcodes/lab6_1/os%20work_lab6%20issue.md)
+[Lab6:调度器](https://github.com/leafCyhvss/os_ucore_formal/blob/master/main_work/labcodes/lab6_1/os%20work_lab6%20issue.md)
 
 [Lab7:同步互斥](https://github.com/leafCyhvss/os_ucore_formal/blob/master/main_work/labcodes/lab7/os_work%20lab7%20issue.md)
 
